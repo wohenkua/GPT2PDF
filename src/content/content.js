@@ -51,7 +51,10 @@
       frag.querySelectorAll('button, menu, svg').forEach(n => n.remove());
 
       // 只保留简单标签，其他降级为文本
-      const ALLOW = new Set(['P','A','STRONG','B','EM','I','U','S','UL','OL','LI','BLOCKQUOTE','BR','H1','H2','H3','H4','H5','H6']);
+      const ALLOW = new Set([
+        'P','A','STRONG','B','EM','I','U','S','UL','OL','LI','BLOCKQUOTE','BR',
+        'H1','H2','H3','H4','H5','H6','PRE','CODE','KBD','SAMP'
+      ]);
       const walker = document.createTreeWalker(frag, NodeFilter.SHOW_ELEMENT);
       const toReplace = [];
       while (walker.nextNode()) {
@@ -67,12 +70,49 @@
         }
       }
       toReplace.forEach(n => {
+        const text = n.textContent || '';
+        const withinCode = typeof n.closest === 'function' ? n.closest('pre, code') : null;
+
+        if (!text.trim() && !withinCode) {
+          n.remove();
+          return;
+        }
+
+        if (withinCode) {
+          n.replaceWith(document.createTextNode(text));
+          return;
+        }
+
+        if (/\n/.test(text)) {
+          const pre = document.createElement('pre');
+          pre.textContent = text;
+          n.replaceWith(pre);
+          return;
+        }
+
         const span = document.createElement('span');
-        span.textContent = n.textContent || '';
+        span.textContent = text;
         n.replaceWith(span);
       });
 
-      const html = frag.innerHTML.trim() || `<p>${(content.textContent || '').trim()}</p>`;
+      let html = frag.innerHTML.trim();
+      if (!html) {
+        const rawText = content.textContent || '';
+        const trimmed = rawText.trim();
+        if (trimmed) {
+          if (/\n/.test(rawText)) {
+            const pre = document.createElement('pre');
+            pre.textContent = rawText.replace(/^[\n\r]+|[\n\r]+$/g, '');
+            html = pre.outerHTML;
+          } else {
+            const p = document.createElement('p');
+            p.textContent = trimmed;
+            html = p.outerHTML;
+          }
+        } else {
+          html = '';
+        }
+      }
 
       return {
         id: 'm' + (i + 1),
