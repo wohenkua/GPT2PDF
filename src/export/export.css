@@ -34,6 +34,22 @@ body {
 
 .msg p { margin: 6px 0; }
 .msg a { text-decoration: underline; }
+.msg pre {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #f5f7fa;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 10pt;
+}
+.msg code {
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  background: #eef1f4;
+  padding: 0 3px;
+  border-radius: 4px;
+}
 
 @media print {
   .header { position: static; }
