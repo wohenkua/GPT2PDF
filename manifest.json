@@ -11,7 +11,8 @@
     "activeTab"
   ],
   "host_permissions": [
-    "https://chat.openai.com/*"
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*"
   ],
   "background": {
     "service_worker": "src/background/sw.js",
@@ -19,7 +20,10 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://chat.openai.com/*"],
+      "matches": [
+        "https://chat.openai.com/*",
+        "https://chatgpt.com/*"
+      ],
       "js": ["src/content/content.js"],
       "css": ["src/content/injectButton.css"],
       "run_at": "document_end"
