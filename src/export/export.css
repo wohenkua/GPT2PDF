@@ -25,7 +25,8 @@ body {
   margin: 12px 0 18px;
   padding: 10px 12px;
   border-radius: 10px;
-  break-inside: avoid;
+  break-inside: auto;
+  page-break-inside: auto;
 }
 .msg .role { font-size: 9pt; color: #666; margin-bottom: 6px; }
 

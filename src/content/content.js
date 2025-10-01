@@ -13,15 +13,13 @@
   // —— 最小抽取：把页面上的“消息块”按顺序抓成 text/html ——
   function extractMinimalConversation() {
     // 选取候选消息容器（不同 UI 可能不同；这里做并联）
-    const nodes = [];
-    const sels = [
-      '[data-message-author-role]', // 常见
-      'article'                     // 有时每条消息是 article
-    ];
-    sels.forEach(sel => {
-      document.querySelectorAll(sel).forEach(n => {
-        if (!nodes.includes(n)) nodes.push(n);
-      });
+    let nodes = Array.from(document.querySelectorAll('[data-message-author-role]'));
+    if (!nodes.length) {
+      nodes = Array.from(document.querySelectorAll('article'));
+    }
+
+    nodes = nodes.filter((node, index, arr) => {
+      return !arr.some((other, otherIndex) => otherIndex !== index && other.contains(node));
     });
 
     // 依据文档顺序排列
