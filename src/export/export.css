@@ -26,8 +26,8 @@ body {
   justify-content: flex-start;
   align-items: flex-start;
   margin: 12px 0 18px;
-  break-inside: avoid;
-  page-break-inside: avoid;
+  break-inside: auto;
+  page-break-inside: auto;
 }
 .msg.user { justify-content: flex-end; }
 .msg.assistant { justify-content: flex-start; }
@@ -36,8 +36,8 @@ body {
   border-radius: 12px;
   padding: 10px 14px;
   background: #fff;
-  break-inside: avoid;
-  page-break-inside: avoid;
+  break-inside: auto;
+  page-break-inside: auto;
   box-shadow: 0 0 0 1px #ebedf0;
   max-width: 100%;
 }
