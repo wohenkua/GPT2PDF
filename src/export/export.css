@@ -22,20 +22,31 @@ body {
 .container { max-width: 900px; margin: 0 auto; }
 
 .msg {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
   margin: 12px 0 18px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  break-inside: auto;
-  page-break-inside: auto;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
-.msg .role { font-size: 9pt; color: #666; margin-bottom: 6px; }
+.msg.user { justify-content: flex-end; }
+.msg.assistant { justify-content: flex-start; }
 
-.msg.user { background: #f7f7f9; }
-.msg.assistant { background: #f1f8ff; }
+.bubble {
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: #fff;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  box-shadow: 0 0 0 1px #ebedf0;
+  max-width: 100%;
+}
+.msg.user .bubble { background: #f5f5f7; }
+.msg.assistant .bubble { background: #fff; }
 
-.msg p { margin: 6px 0; }
-.msg a { text-decoration: underline; }
-.msg pre {
+.bubble p { margin: 6px 0; }
+.bubble a { text-decoration: underline; }
+.bubble pre {
   margin: 8px 0;
   padding: 8px 10px;
   border-radius: 6px;
@@ -45,7 +56,7 @@ body {
   font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
   font-size: 10pt;
 }
-.msg code {
+.bubble code {
   font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
   background: #eef1f4;
   padding: 0 3px;
