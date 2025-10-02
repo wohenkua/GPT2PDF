@@ -15,9 +15,10 @@ body {
   border-bottom: 1px solid #eee;
   margin-bottom: 12px;
 }
-.header h1 { margin: 0 0 6px; font-size: 18pt; }
-.header .meta { color: #555; font-size: 9pt; }
-.header a { text-decoration: underline; }
+.header h1 {
+  margin: 0;
+  font-size: 18pt;
+}
 
 .container { max-width: 900px; margin: 0 auto; }
 
