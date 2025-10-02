@@ -26,7 +26,6 @@ function render(conversation) {
   // 消息
   const app = document.getElementById('app');
   app.innerHTML = (conversation.items || []).map(item => {
-    const roleLabel = item.role === 'user' ? '用户' : '助手';
     // 当前最小版：只渲染 text 块（下一轮会支持代码、表格、图片、公式等）
     const htmlBlocks = (item.blocks || []).map(b => {
       if (b.type === 'text' && b.html) return b.html;
@@ -36,8 +35,7 @@ function render(conversation) {
     }).join('\n');
     return `
       <section class="msg ${item.role}">
-        <div class="role">${roleLabel}</div>
-        ${htmlBlocks}
+        <div class="bubble">${htmlBlocks}</div>
       </section>
     `;
   }).join('\n');
