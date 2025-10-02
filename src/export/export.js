@@ -11,17 +11,7 @@ function escapeHtml(s='') {
 function render(conversation) {
   // 顶部信息
   const title = conversation.title || 'ChatGPT 对话导出';
-  const time  = conversation.exportedAt
-    ? new Date(conversation.exportedAt).toLocaleString()
-    : new Date().toLocaleString();
-  const link  = conversation.sourceUrl || '';
-
   document.getElementById('doc-title').textContent = title;
-  const timeEl = document.getElementById('doc-time');
-  timeEl.textContent = `导出时间：${time}`;
-  const linkEl = document.getElementById('doc-link');
-  linkEl.textContent = link;
-  linkEl.href = link;
 
   // 消息
   const app = document.getElementById('app');
