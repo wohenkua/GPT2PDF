@@ -17,6 +17,7 @@ function render(conversation) {
   const link  = conversation.sourceUrl || '';
 
   document.getElementById('doc-title').textContent = title;
+  document.title = title;
   const timeEl = document.getElementById('doc-time');
   timeEl.textContent = `导出时间：${time}`;
   const linkEl = document.getElementById('doc-link');
