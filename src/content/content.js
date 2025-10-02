@@ -11,7 +11,7 @@
   btn.addEventListener('click', onExportClicked);
 
   // —— 最小抽取：把页面上的“消息块”按顺序抓成 text/html ——
-  function extractMinimalConversation() {
+  async function extractMinimalConversation() {
     // 选取候选消息容器（不同 UI 可能不同；这里做并联）
     let nodes = Array.from(document.querySelectorAll('[data-message-author-role]'));
     if (!nodes.length) {
@@ -30,7 +30,7 @@
       return 0;
     });
 
-    const items = ordered.map((el, i) => {
+    const rawItems = await Promise.all(ordered.map(async (el, i) => {
       // 简易角色判断
       const roleAttr = (el.getAttribute('data-message-author-role') || '').toLowerCase();
       const role = roleAttr.includes('assistant') ? 'assistant'
@@ -51,7 +51,7 @@
       // 只保留简单标签，其他降级为文本
       const ALLOW = new Set([
         'P','A','STRONG','B','EM','I','U','S','UL','OL','LI','BLOCKQUOTE','BR',
-        'H1','H2','H3','H4','H5','H6','PRE','CODE','KBD','SAMP'
+        'H1','H2','H3','H4','H5','H6','PRE','CODE','KBD','SAMP','IMG'
       ]);
       const walker = document.createTreeWalker(frag, NodeFilter.SHOW_ELEMENT);
       const toReplace = [];
@@ -93,6 +93,37 @@
         n.replaceWith(span);
       });
 
+      const images = Array.from(frag.querySelectorAll('img'));
+      await Promise.all(images.map(async (img) => {
+        const src = img.getAttribute('src');
+        if (!src) return;
+
+        let absUrl;
+        try {
+          absUrl = new URL(src, location.href).href;
+          img.setAttribute('src', absUrl);
+        } catch {
+          absUrl = src;
+        }
+
+        try {
+          const resp = await fetch(absUrl);
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          const blob = await resp.blob();
+          const dataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(reader.error || new Error('读取图片失败'));
+            reader.readAsDataURL(blob);
+          });
+          img.setAttribute('src', dataUrl);
+          img.removeAttribute('srcset');
+          img.removeAttribute('sizes');
+        } catch (err) {
+          console.warn('图片嵌入失败', absUrl, err);
+        }
+      }));
+
       let html = frag.innerHTML.trim();
       if (!html) {
         const rawText = content.textContent || '';
@@ -117,7 +148,8 @@
         role,
         blocks: [{ type: 'text', html }]
       };
-    }).filter(m => m.blocks && m.blocks.length);
+    }));
+    const items = rawItems.filter(m => m && m.blocks && m.blocks.length);
 
     const title = (document.title || '').replace(/\s*\|\s*ChatGPT.*/i, '').trim() || 'ChatGPT 对话';
     return {
@@ -133,7 +165,7 @@
     btn.style.pointerEvents = 'none';
 
     try {
-      const conversation = extractMinimalConversation();
+      const conversation = await extractMinimalConversation();
       await new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({ type: 'OPEN_EXPORTER', conversation }, (resp) => {
           if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);

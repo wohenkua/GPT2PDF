@@ -31,6 +31,10 @@ function render(conversation) {
     const htmlBlocks = (item.blocks || []).map(b => {
       if (b.type === 'text' && b.html) return b.html;
       if (b.type === 'text' && b.text) return `<p>${escapeHtml(b.text)}</p>`;
+      if (b.type === 'image' && b.src) {
+        const alt = b.alt ? ` alt="${escapeHtml(b.alt)}"` : '';
+        return `<figure class="img-block"><img src="${escapeHtml(b.src)}"${alt}></figure>`;
+      }
       // 其它类型暂时保底展示为纯文本提示
       return '';
     }).join('\n');
@@ -59,11 +63,23 @@ async function main() {
 
   render(conversation);
 
-  // 资源准备好后触发打印（此处最小版，后续会等待图片/公式渲染）
-  setTimeout(() => window.print(), 200);
+  await waitForImages();
+  window.print();
 
   // 打印触发后清理临时数据（异步）
   chrome.runtime.sendMessage({ type: 'CLEANUP', key }).catch(()=>{});
+}
+
+async function waitForImages() {
+  const images = Array.from(document.querySelectorAll('img'));
+  await Promise.all(images.map((img) => {
+    if (img.complete) return;
+    return new Promise((resolve) => {
+      const done = () => resolve();
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
+    });
+  }));
 }
 
 main().catch(err => {
