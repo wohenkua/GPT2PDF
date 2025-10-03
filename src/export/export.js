@@ -30,6 +30,35 @@ function render(conversation) {
       </section>
     `;
   }).join('\n');
+
+  return app;
+}
+
+async function waitForImages(container) {
+  if (!container) return;
+  const images = Array.from(container.querySelectorAll('img'));
+  if (!images.length) return;
+
+  await Promise.all(images.map(img => {
+    img.setAttribute('loading', 'eager');
+    return new Promise(resolve => {
+      const onLoad = () => cleanup();
+      const onError = () => cleanup();
+      const cleanup = () => {
+        img.removeEventListener('load', onLoad);
+        img.removeEventListener('error', onError);
+        resolve();
+      };
+
+      if (img.complete) {
+        cleanup();
+        return;
+      }
+
+      img.addEventListener('load', onLoad, { once: true });
+      img.addEventListener('error', onError, { once: true });
+    });
+  }));
 }
 
 async function main() {
@@ -46,10 +75,11 @@ async function main() {
     return;
   }
 
-  render(conversation);
+  const container = render(conversation);
 
-  // 资源准备好后触发打印（此处最小版，后续会等待图片/公式渲染）
-  setTimeout(() => window.print(), 200);
+  await waitForImages(container);
+
+  window.print();
 
   // 打印触发后清理临时数据（异步）
   chrome.runtime.sendMessage({ type: 'CLEANUP', key }).catch(()=>{});

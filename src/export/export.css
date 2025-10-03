@@ -24,8 +24,8 @@ body {
   justify-content: flex-start;
   align-items: flex-start;
   margin: 12px 0 18px;
-  break-inside: auto;
-  page-break-inside: auto;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 .msg.user { justify-content: flex-end; }
 .msg.assistant { justify-content: flex-start; }
@@ -34,8 +34,8 @@ body {
   border-radius: 12px;
   padding: 10px 14px;
   background: #fff;
-  break-inside: auto;
-  page-break-inside: auto;
+  break-inside: avoid;
+  page-break-inside: avoid;
   box-shadow: 0 0 0 1px #ebedf0;
   max-width: 100%;
 }
@@ -43,6 +43,14 @@ body {
 .msg.assistant .bubble { background: #fff; }
 
 .bubble p { margin: 6px 0; }
+.bubble img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 8px 0;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
 .bubble a { text-decoration: underline; }
 .bubble pre {
   margin: 8px 0;
