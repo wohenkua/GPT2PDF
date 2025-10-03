@@ -30,6 +30,32 @@ function render(conversation) {
       </section>
     `;
   }).join('\n');
+
+  app.querySelectorAll('img').forEach(img => {
+    if (!img.getAttribute('alt')) img.setAttribute('alt', '');
+    img.loading = 'eager';
+    if (!img.decoding) img.decoding = 'sync';
+  });
+
+  return app;
+}
+
+function waitForImages(root) {
+  const images = Array.from(root.querySelectorAll('img'));
+  if (!images.length) return Promise.resolve();
+
+  return Promise.all(images.map(img => {
+    if (img.complete) return Promise.resolve();
+    return new Promise(resolve => {
+      const done = () => {
+        img.removeEventListener('load', done);
+        img.removeEventListener('error', done);
+        resolve();
+      };
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
+    });
+  }));
 }
 
 async function main() {
@@ -46,10 +72,14 @@ async function main() {
     return;
   }
 
-  render(conversation);
+  const app = render(conversation);
 
-  // 资源准备好后触发打印（此处最小版，后续会等待图片/公式渲染）
-  setTimeout(() => window.print(), 200);
+  await waitForImages(app);
+
+  // 等待下一帧确保排版完成
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+  window.print();
 
   // 打印触发后清理临时数据（异步）
   chrome.runtime.sendMessage({ type: 'CLEANUP', key }).catch(()=>{});

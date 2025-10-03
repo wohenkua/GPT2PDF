@@ -51,13 +51,34 @@
       // 只保留简单标签，其他降级为文本
       const ALLOW = new Set([
         'P','A','STRONG','B','EM','I','U','S','UL','OL','LI','BLOCKQUOTE','BR',
-        'H1','H2','H3','H4','H5','H6','PRE','CODE','KBD','SAMP'
+        'H1','H2','H3','H4','H5','H6','PRE','CODE','KBD','SAMP','IMG','FIGCAPTION'
       ]);
+      const allowedDescendantSelector = Array.from(ALLOW)
+        .map(tag => tag.toLowerCase())
+        .join(',');
+      const KEEP_STRUCTURE = new Set(['FIGURE', 'PICTURE']);
       const walker = document.createTreeWalker(frag, NodeFilter.SHOW_ELEMENT);
       const toReplace = [];
+      const toUnwrap = [];
       while (walker.nextNode()) {
         const node = walker.currentNode;
-        if (!ALLOW.has(node.tagName)) toReplace.push(node);
+        if (!ALLOW.has(node.tagName)) {
+          if (KEEP_STRUCTURE.has(node.tagName)) continue;
+
+          const shouldPreserveChildren =
+            typeof node.querySelector === 'function' &&
+            allowedDescendantSelector &&
+            node.querySelector(allowedDescendantSelector);
+
+          if (shouldPreserveChildren) {
+            toUnwrap.push(node);
+            continue;
+          }
+
+          toReplace.push(node);
+          continue;
+        }
+
         if (node.tagName === 'A') {
           const href = node.getAttribute('href');
           if (href) {
@@ -65,8 +86,41 @@
           }
           node.setAttribute('target', '_blank');
           node.setAttribute('rel', 'noopener noreferrer');
+          continue;
+        }
+
+        if (node.tagName === 'IMG') {
+          const candidateAttrs = ['src', 'data-src', 'data-original', 'data-image-src'];
+          let src = '';
+          for (const attr of candidateAttrs) {
+            const value = node.getAttribute(attr);
+            if (value) {
+              src = value.trim();
+              if (src) break;
+            }
+          }
+
+          if (src) {
+            try { node.setAttribute('src', new URL(src, location.href).href); }
+            catch { node.setAttribute('src', src); }
+          }
+
+          const safeAttrs = new Set(['src', 'alt', 'width', 'height']);
+          node.getAttributeNames().forEach(attr => {
+            if (!safeAttrs.has(attr.toLowerCase())) {
+              node.removeAttribute(attr);
+            }
+          });
+
+          if (!node.hasAttribute('alt')) node.setAttribute('alt', '');
+          node.setAttribute('loading', 'eager');
         }
       }
+      toUnwrap.forEach(n => {
+        const fragment = document.createDocumentFragment();
+        while (n.firstChild) fragment.appendChild(n.firstChild);
+        n.replaceWith(fragment);
+      });
       toReplace.forEach(n => {
         const text = n.textContent || '';
         const withinCode = typeof n.closest === 'function' ? n.closest('pre, code') : null;
