@@ -1,0 +1,18 @@
+/* 右下角悬浮按钮（避免遮挡原UI，尽量紧凑） */
+#cg2pdf-btn {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 999999;
+  padding: 10px 12px;
+  background: #10a37f;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.15);
+  cursor: pointer;
+  user-select: none;
+  transition: transform .05s ease-in-out, box-shadow .2s ease;
+}
+#cg2pdf-btn:hover { box-shadow: 0 8px 20px rgba(0,0,0,.18); }
+#cg2pdf-btn:active { transform: translateY(1px); }
