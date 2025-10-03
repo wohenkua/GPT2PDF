@@ -51,7 +51,7 @@
       // 只保留简单标签，其他降级为文本
       const ALLOW = new Set([
         'P','A','STRONG','B','EM','I','U','S','UL','OL','LI','BLOCKQUOTE','BR',
-        'H1','H2','H3','H4','H5','H6','PRE','CODE','KBD','SAMP'
+        'H1','H2','H3','H4','H5','H6','PRE','CODE','KBD','SAMP','IMG'
       ]);
       const walker = document.createTreeWalker(frag, NodeFilter.SHOW_ELEMENT);
       const toReplace = [];
@@ -65,6 +65,92 @@
           }
           node.setAttribute('target', '_blank');
           node.setAttribute('rel', 'noopener noreferrer');
+        } else if (node.tagName === 'IMG') {
+          const absolutize = (url) => {
+            if (!url) return '';
+            try { return new URL(url, location.href).href; } catch { return ''; }
+          };
+
+          const cleanupAttributes = () => {
+            Array.from(node.attributes).forEach(attr => {
+              const name = attr.name.toLowerCase();
+              if (name.startsWith('on')) {
+                node.removeAttribute(attr.name);
+              }
+            });
+          };
+
+          const parseSrcset = (value) => {
+            if (!value) return { list: [], best: '' };
+            const entries = value.split(',').map(part => {
+              const trimmed = part.trim();
+              if (!trimmed) return null;
+              const spaceIndex = trimmed.lastIndexOf(' ');
+              let url = trimmed;
+              let descriptor = '';
+              if (spaceIndex > -1) {
+                url = trimmed.slice(0, spaceIndex).trim();
+                descriptor = trimmed.slice(spaceIndex + 1).trim();
+              }
+              const abs = absolutize(url);
+              if (!abs) return null;
+              let score = 0;
+              if (/^[0-9]+w$/.test(descriptor)) {
+                score = parseInt(descriptor, 10) || 0;
+              } else if (/^[0-9]*\.?[0-9]+x$/.test(descriptor)) {
+                score = parseFloat(descriptor) || 0;
+              } else {
+                score = abs.length;
+              }
+              return { abs, descriptor, score };
+            }).filter(Boolean);
+
+            let best = '';
+            if (entries.length) {
+              entries.sort((a, b) => b.score - a.score);
+              best = entries[0].abs;
+            }
+            const setValue = entries.map(e => `${e.abs}${e.descriptor ? ` ${e.descriptor}` : ''}`).join(', ');
+            return { list: entries, best, setValue };
+          };
+
+          const srcsetAttr = node.getAttribute('srcset') || node.getAttribute('data-srcset');
+          const parsedSrcset = parseSrcset(srcsetAttr);
+          if (parsedSrcset.list.length) {
+            node.setAttribute('srcset', parsedSrcset.setValue);
+          } else {
+            node.removeAttribute('srcset');
+          }
+          if (node.hasAttribute('data-srcset')) {
+            node.removeAttribute('data-srcset');
+          }
+
+          const candidateAttrs = [
+            'src', 'data-src', 'data-original', 'data-url', 'data-lazy-src',
+            'data-lazyload', 'data-image', 'data-zoom-src', 'data-href'
+          ];
+          const candidates = [];
+          candidateAttrs.forEach(attr => {
+            const val = node.getAttribute(attr);
+            if (val) candidates.push(val);
+          });
+          if (parsedSrcset.best) {
+            candidates.push(parsedSrcset.best);
+          }
+          const finalSrc = candidates.map(absolutize).find(Boolean);
+          if (finalSrc) {
+            node.setAttribute('src', finalSrc);
+          }
+          candidateAttrs.forEach(attr => {
+            if (attr !== 'src') node.removeAttribute(attr);
+          });
+
+          const alt = node.getAttribute('alt');
+          if (alt == null) {
+            node.setAttribute('alt', '');
+          }
+
+          cleanupAttributes();
         }
       }
       toReplace.forEach(n => {
