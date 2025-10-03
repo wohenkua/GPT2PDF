@@ -122,8 +122,6 @@
     const title = (document.title || '').replace(/\s*\|\s*ChatGPT.*/i, '').trim() || 'ChatGPT 对话';
     return {
       title,
-      sourceUrl: location.href,
-      exportedAt: new Date().toISOString(),
       items
     };
   }

@@ -16,8 +16,6 @@ body {
   margin-bottom: 12px;
 }
 .header h1 { margin: 0 0 6px; font-size: 18pt; }
-.header .meta { color: #555; font-size: 9pt; }
-.header a { text-decoration: underline; }
 
 .container { max-width: 900px; margin: 0 auto; }
 
@@ -41,7 +39,7 @@ body {
   box-shadow: 0 0 0 1px #ebedf0;
   max-width: 100%;
 }
-.msg.user .bubble { background: #f5f5f7; }
+.msg.user .bubble { background: #eee; }
 .msg.assistant .bubble { background: #fff; }
 
 .bubble p { margin: 6px 0; }
