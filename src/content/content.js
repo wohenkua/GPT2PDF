@@ -51,7 +51,8 @@
       // 只保留简单标签，其他降级为文本
       const ALLOW = new Set([
         'P','A','STRONG','B','EM','I','U','S','UL','OL','LI','BLOCKQUOTE','BR',
-        'H1','H2','H3','H4','H5','H6','PRE','CODE','KBD','SAMP'
+        'H1','H2','H3','H4','H5','H6','PRE','CODE','KBD','SAMP',
+        'FIGURE','FIGCAPTION','PICTURE'
       ]);
       const walker = document.createTreeWalker(frag, NodeFilter.SHOW_ELEMENT);
       const toReplace = [];
@@ -72,7 +73,12 @@
         const withinCode = typeof n.closest === 'function' ? n.closest('pre, code') : null;
 
         if (!text.trim() && !withinCode) {
-          n.remove();
+          const children = Array.from(n.childNodes || []);
+          if (children.length) {
+            n.replaceWith(...children);
+          } else {
+            n.remove();
+          }
           return;
         }
 
