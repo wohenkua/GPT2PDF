@@ -51,8 +51,9 @@
       // 只保留简单标签，其他降级为文本
       const ALLOW = new Set([
         'P','A','STRONG','B','EM','I','U','S','UL','OL','LI','BLOCKQUOTE','BR',
-        'H1','H2','H3','H4','H5','H6','PRE','CODE','KBD','SAMP'
+        'H1','H2','H3','H4','H5','H6','PRE','CODE','KBD','SAMP','IMG','FIGURE','FIGCAPTION'
       ]);
+      const IMG_ATTR_ALLOW = new Set(['src', 'alt', 'width', 'height', 'srcset', 'sizes']);
       const walker = document.createTreeWalker(frag, NodeFilter.SHOW_ELEMENT);
       const toReplace = [];
       while (walker.nextNode()) {
@@ -65,6 +66,42 @@
           }
           node.setAttribute('target', '_blank');
           node.setAttribute('rel', 'noopener noreferrer');
+        }
+        if (node.tagName === 'IMG') {
+          const rawSrc = node.getAttribute('src') || node.getAttribute('data-src') || node.getAttribute('data-original');
+          const rawSrcset = node.getAttribute('srcset');
+          Array.from(node.attributes).forEach(attr => {
+            if (!IMG_ATTR_ALLOW.has(attr.name.toLowerCase())) {
+              node.removeAttribute(attr.name);
+            }
+          });
+          if (rawSrc) {
+            try {
+              node.setAttribute('src', new URL(rawSrc, location.href).href);
+            } catch {
+              node.setAttribute('src', rawSrc);
+            }
+          }
+          if (rawSrcset) {
+            const resolved = rawSrcset.split(',').map(part => {
+              const trimmed = part.trim();
+              if (!trimmed) return '';
+              const bits = trimmed.split(/\s+/, 2);
+              const urlPart = bits[0];
+              const descriptor = bits[1] ? ` ${bits[1]}` : '';
+              let abs = urlPart;
+              try { abs = new URL(urlPart, location.href).href; } catch {}
+              return abs + descriptor;
+            }).filter(Boolean).join(', ');
+            if (resolved) node.setAttribute('srcset', resolved);
+            else node.removeAttribute('srcset');
+          }
+          if (!node.hasAttribute('alt')) node.setAttribute('alt', '');
+        }
+        if (node.tagName === 'FIGURE' || node.tagName === 'FIGCAPTION') {
+          Array.from(node.attributes).forEach(attr => {
+            if (!['role'].includes(attr.name.toLowerCase())) node.removeAttribute(attr.name);
+          });
         }
       }
       toReplace.forEach(n => {
