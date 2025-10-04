@@ -61,6 +61,33 @@ body {
   border-radius: 4px;
 }
 
+.bubble figure {
+  margin: 12px 0;
+}
+
+.bubble figure.image-block {
+  margin: 14px 0;
+}
+
+.bubble img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 10px 0;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04);
+  background: #fff;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.bubble figcaption {
+  margin-top: 6px;
+  font-size: 10pt;
+  color: #666;
+  text-align: center;
+}
+
 @media print {
   .header { position: static; }
 }
