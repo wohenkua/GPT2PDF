@@ -3,6 +3,20 @@
   if (window.__cg2pdf_injected__) return;
   window.__cg2pdf_injected__ = true;
 
+  // ================ 常量 & 工具函数 ================
+  const ROLE_HINT_ENTRIES = [
+    ['您说', 'user'],
+    ['你说', 'user'],
+    ['you said', 'user'],
+    ['chatgpt 说', 'assistant'],
+    ['chatgpt said', 'assistant'],
+    ['assistant said', 'assistant']
+  ];
+  const ROLE_HINT_TEXTS = new Set(ROLE_HINT_ENTRIES.map(([t]) => t.toLowerCase()));
+  const ROLE_HINT_TEXT_TO_ROLE = new Map(
+    ROLE_HINT_ENTRIES.map(([t, role]) => [t.toLowerCase(), role])
+  );
+
   // ================= 工具函数 =================
   function toAbs(url) { try { return new URL(url, location.href).href; } catch { return url; } }
 
@@ -80,6 +94,45 @@
     return div;
   }
 
+  function matchRoleHintText(text) {
+    if (!text) return null;
+    return text
+      .split(/[\n•·]/)
+      .map(part => part.trim().replace(/[:：\s]+$/g, '').toLowerCase())
+      .map(part => ROLE_HINT_TEXT_TO_ROLE.get(part) || null)
+      .find(Boolean) || null;
+  }
+
+  function detectRoleFromHints(el) {
+    const candidates = new Set();
+    const selectors = [
+      '[data-testid="conversation-turn-label"]',
+      '[data-testid="conversation-turn-author"]',
+      '[data-testid="conversation-turn-badge"]',
+      '[data-testid^="conversation-turn"]',
+      '[data-message-author-name]',
+      'header',
+      '[aria-label]'
+    ];
+    selectors.forEach(sel => {
+      el.querySelectorAll(sel).forEach(node => {
+        const text = node?.textContent || '';
+        if (text) candidates.add(text);
+      });
+    });
+
+    const ariaLabel = el.getAttribute('aria-label');
+    if (ariaLabel) candidates.add(ariaLabel);
+
+    for (const text of candidates) {
+      const role = matchRoleHintText(text);
+      if (role) return role;
+    }
+    const fallback = matchRoleHintText(el?.textContent || '');
+    if (fallback) return fallback;
+    return null;
+  }
+
   // 角色识别
   function detectRole(el) {
     const attr = (el.getAttribute('data-message-author-role') || '').toLowerCase();
@@ -88,6 +141,8 @@
     const cls = (el.className || '').toLowerCase();
     if (/assistant|bot|model/.test(cls)) return 'assistant';
     if (/user|human/.test(cls)) return 'user';
+    const hintRole = detectRoleFromHints(el);
+    if (hintRole) return hintRole;
     if (el.querySelector('pre code, .katex, mjx-container, img, figure')) return 'assistant';
     return 'user';
   }
@@ -183,15 +238,6 @@
   // ================= 抽取消息 blocks =================
   // 识别 text / image / code / formula，并保持文档顺序
   function extractBlocks(msgNode) {
-    const ROLE_HINT_TEXTS = new Set([
-      '您说',
-      '你说',
-      'chatgpt 说',
-      'you said',
-      'chatgpt said',
-      'assistant said'
-    ].map(t => t.toLowerCase()));
-
     // 找“重要块”
     const important = [];
     const tw = document.createTreeWalker(msgNode, NodeFilter.SHOW_ELEMENT, {
