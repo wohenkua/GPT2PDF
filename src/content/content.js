@@ -48,7 +48,15 @@
       'P','H1','H2','H3','H4','H5','H6',
       'STRONG','EM','B','I','U','S','SUB','SUP','SMALL','MARK',
       'UL','OL','LI','BLOCKQUOTE',
-      'A','CODE','BR','HR','SPAN'
+      'A','CODE','BR','HR','SPAN','IMG'
+    ]);
+    const ALLOWED_IMG_ATTRS = new Set([
+      'src',
+      'alt',
+      'width',
+      'height',
+      'referrerpolicy',
+      'data-cg2pdf-badge'
     ]);
 
     function unwrapKeepChildren(el) {
@@ -88,6 +96,14 @@
         }
         el.setAttribute('target', '_blank');
         el.setAttribute('rel', 'noopener noreferrer');
+      } else if (tag === 'IMG') {
+        Array.from(el.attributes).forEach(attr => {
+          const name = attr.name.toLowerCase();
+          if (!ALLOWED_IMG_ATTRS.has(name)) {
+            el.removeAttribute(attr.name);
+          }
+        });
+        if (!el.hasAttribute('alt')) el.setAttribute('alt', '');
       }
     }
     toReplace.forEach(([from, to]) => from.replaceWith(to));
@@ -199,6 +215,41 @@
     };
   }
 
+  function isInlineBadge(imgEl) {
+    if (!imgEl) return false;
+    const src = (imgEl.getAttribute('src') || imgEl.currentSrc || '').toLowerCase();
+    const hasFaviconSrc = src.includes('s2/favicons') || src.includes('favicon');
+    const keywordRe = /\b(footnotes?|sources?)\b/;
+    const alt = (imgEl.getAttribute('alt') || '').toLowerCase();
+    const aria = (imgEl.getAttribute('aria-label') || '').toLowerCase();
+    let hasKeywordContext = keywordRe.test(alt) || keywordRe.test(aria);
+    if (!hasKeywordContext) {
+      let parent = imgEl.parentElement;
+      for (let depth = 0; parent && depth < 3 && !hasKeywordContext; depth++) {
+        const cls = (parent.className || '').toLowerCase();
+        const parentAria = (parent.getAttribute?.('aria-label') || '').toLowerCase();
+        if (keywordRe.test(cls) || keywordRe.test(parentAria)) {
+          hasKeywordContext = true;
+          break;
+        }
+        parent = parent.parentElement;
+      }
+    }
+    if (!hasFaviconSrc && !hasKeywordContext) return false;
+
+    const { width, height } = getRenderedImageSize(imgEl);
+    const dims = [];
+    if (Number.isFinite(width) && width > 0) dims.push(width);
+    if (Number.isFinite(height) && height > 0) dims.push(height);
+    const attrWidth = parseInt(imgEl.getAttribute?.('width') || '', 10);
+    const attrHeight = parseInt(imgEl.getAttribute?.('height') || '', 10);
+    if (Number.isFinite(attrWidth) && attrWidth > 0) dims.push(attrWidth);
+    if (Number.isFinite(attrHeight) && attrHeight > 0) dims.push(attrHeight);
+    if (!dims.length) return false;
+    const maxSide = Math.max(...dims);
+    return maxSide <= 48;
+  }
+
   // ============ chatgpt.com 后端临时签名图：强制转 data: ============
   function isEphemeralChatgptImage(url) {
     try {
@@ -245,7 +296,9 @@
         const tag = el.tagName.toLowerCase();
         if (tag === 'pre' && el.querySelector('code')) return NodeFilter.FILTER_ACCEPT;
         if (tag === 'figure') return NodeFilter.FILTER_ACCEPT;
-        if (tag === 'img' && !el.closest('figure')) return NodeFilter.FILTER_ACCEPT;
+        if (tag === 'img' && !el.closest('figure')) {
+          return isInlineBadge(el) ? NodeFilter.FILTER_SKIP : NodeFilter.FILTER_ACCEPT;
+        }
         if (el.classList?.contains('katex') || el.querySelector?.('.katex')) return NodeFilter.FILTER_ACCEPT;
         if (tag.startsWith('mjx-') || el.querySelector?.('mjx-container')) return NodeFilter.FILTER_ACCEPT;
         return NodeFilter.FILTER_SKIP;
@@ -262,6 +315,10 @@
       if (!nodeInClone) return;
 
       const tag = origNode.tagName.toLowerCase();
+      if (tag === 'img' && isInlineBadge(origNode)) {
+        nodeInClone.setAttribute('data-cg2pdf-badge', 'true');
+        return;
+      }
       if (tag === 'pre' && origNode.querySelector('code')) {
         const codeEl = origNode.querySelector('code');
         const lang = (codeEl.className || '').match(/language-([\w+-]+)/i)?.[1]?.toLowerCase() || null;

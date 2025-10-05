@@ -45,6 +45,14 @@ body {
   margin: 0 auto;
 }
 
+.msg img[data-cg2pdf-badge] {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 4px 0 0;
+  max-height: 48px;
+  width: auto;
+}
+
 @media print {
   .header { position: static; }
 }
