@@ -16,50 +16,24 @@ body {
   margin-bottom: 12px;
 }
 .header h1 { margin: 0 0 6px; font-size: 18pt; }
+.header .meta { color: #555; font-size: 9pt; }
+.header a { text-decoration: underline; }
 
 .container { max-width: 900px; margin: 0 auto; }
 
 .msg {
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
   margin: 12px 0 18px;
-  break-inside: auto;
-  page-break-inside: auto;
+  padding: 10px 12px;
+  border-radius: 10px;
+  break-inside: avoid;
 }
-.msg.user { justify-content: flex-end; }
-.msg.assistant { justify-content: flex-start; }
+.msg .role { font-size: 9pt; color: #666; margin-bottom: 6px; }
 
-.bubble {
-  border-radius: 12px;
-  padding: 10px 14px;
-  background: #fff;
-  break-inside: auto;
-  page-break-inside: auto;
-  box-shadow: 0 0 0 1px #ebedf0;
-  max-width: 100%;
-}
-.msg.user .bubble { background: #eee; }
-.msg.assistant .bubble { background: #fff; }
+.msg.user { background: #f7f7f9; }
+.msg.assistant { background: #f1f8ff; }
 
-.bubble p { margin: 6px 0; }
-.bubble a { text-decoration: underline; }
-.bubble pre {
-  margin: 8px 0;
-  padding: 8px 10px;
-  border-radius: 6px;
-  background: #f5f7fa;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 10pt;
-}
-.bubble code {
-  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-  background: #eef1f4;
-  padding: 0 3px;
-  border-radius: 4px;
-}
+.msg p { margin: 6px 0; }
+.msg a { text-decoration: underline; }
 
 @media print {
   .header { position: static; }
