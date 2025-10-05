@@ -46,11 +46,9 @@ function render(conversation) {
 
   const app = document.getElementById('app');
   app.innerHTML = (conversation.items || []).map(item => {
-    const roleLabel = item.role === 'user' ? '用户' : '助手';
     const blocksHTML = renderBlocks(item.blocks);
     return `
       <section class="msg ${item.role}">
-        <div class="role">${roleLabel}</div>
         ${blocksHTML}
       </section>
     `;

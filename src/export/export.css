@@ -27,7 +27,6 @@ body {
   border-radius: 10px;
   break-inside: avoid;
 }
-.msg .role { font-size: 9pt; color: #666; margin-bottom: 6px; }
 
 .msg.user { background: #f7f7f9; }
 .msg.assistant { background: #f1f8ff; }
