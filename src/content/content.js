@@ -135,14 +135,21 @@
 
   // 角色识别
   function detectRole(el) {
-    const attr = (el.getAttribute('data-message-author-role') || '').toLowerCase();
+    // PATCH: 读取最近的祖先或任一后代的 data-message-author-role（治根）
+    const roleHost =
+      el.closest?.('[data-message-author-role]') ||
+      el.querySelector?.('[data-message-author-role]');
+    const attr = (roleHost?.getAttribute('data-message-author-role') || '').toLowerCase();
     if (attr.includes('assistant')) return 'assistant';
     if (attr.includes('user')) return 'user';
+
     const cls = (el.className || '').toLowerCase();
     if (/assistant|bot|model/.test(cls)) return 'assistant';
     if (/user|human/.test(cls)) return 'user';
+
     const hintRole = detectRoleFromHints(el);
     if (hintRole) return hintRole;
+
     if (el.querySelector('pre code, .katex, mjx-container, img, figure')) return 'assistant';
     return 'user';
   }
@@ -351,6 +358,8 @@
     sels.forEach(sel => {
       document.querySelectorAll(sel).forEach(n => {
         if (sel === 'article') {
+          // PATCH: 若 article 内部已有带 role 的后代，则跳过该 article（治根）
+          if (n.querySelector('[data-message-author-role]')) return;
           const ancestorWithRole = n.closest('[data-message-author-role]');
           if (ancestorWithRole && ancestorWithRole !== n) return;
         }
