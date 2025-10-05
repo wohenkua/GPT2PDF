@@ -50,6 +50,8 @@
       'UL','OL','LI','BLOCKQUOTE',
       'A','CODE','BR','HR','SPAN'
     ]);
+    const DECORATIVE_ARIA_HIDDEN_TAGS = new Set(['SVG', 'PATH', 'BUTTON', 'I']);
+    const DECORATIVE_ARIA_HIDDEN_SELECTOR = 'span[class*="icon"], span[data-testid*="icon"], span[role="img"]';
 
     function unwrapKeepChildren(el) {
       const parent = el.parentNode;
@@ -68,7 +70,32 @@
     div.querySelectorAll('svg, path, input, textarea, select').forEach(n => n.remove());
 
     // 移除仅用于可访问性的隐藏角色标签
-    div.querySelectorAll('[data-testid="conversation-turn-label"], .sr-only, [aria-hidden="true"]').forEach(n => n.remove());
+    div.querySelectorAll('[data-testid="conversation-turn-label"], .sr-only').forEach(n => n.remove());
+
+    // 对 aria-hidden 元素：仅移除可识别的装饰节点，保留真实文本/公式
+    div.querySelectorAll('[aria-hidden="true"]').forEach(node => {
+      const text = node.textContent || '';
+      const hasText = /\S/.test(text);
+      const hasMath = node.querySelector?.('.katex, mjx-container, math');
+      if (hasText || hasMath) return;
+
+      const el = node;
+      const tag = el.tagName;
+      if (DECORATIVE_ARIA_HIDDEN_TAGS.has(tag)) {
+        el.remove();
+        return;
+      }
+
+      if (el.matches?.(DECORATIVE_ARIA_HIDDEN_SELECTOR)) {
+        el.remove();
+        return;
+      }
+
+      if (!el.children.length) {
+        el.remove();
+        return;
+      }
+    });
 
     // 规范链接、降级未知标签
     const walker = document.createTreeWalker(div, NodeFilter.SHOW_ELEMENT, null);
