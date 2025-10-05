@@ -46,11 +46,44 @@ body {
   margin: 10px 0;
 }
 
-.msg img {
+.msg figure img {
   max-width: 100%;
   height: auto;
   display: block;
   margin: 0 auto;
+}
+
+.msg [data-testid*="source" i],
+.msg [data-testid*="来源"],
+.msg [aria-label*="source" i],
+.msg [aria-label*="来源"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f3f4f6;
+  color: #0f172a;
+  font-size: 10pt;
+  line-height: 1.2;
+  text-decoration: none;
+  margin: 6px 8px 0 0;
+  vertical-align: middle;
+}
+
+.msg [data-testid*="source" i] img,
+.msg [data-testid*="来源"] img,
+.msg [aria-label*="source" i] img,
+.msg [aria-label*="来源"] img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block;
+  margin: 0;
+  max-width: none;
+  flex-shrink: 0;
 }
 
 @media print {
