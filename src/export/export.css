@@ -19,17 +19,33 @@ body {
 .header .meta { color: #555; font-size: 9pt; }
 .header a { text-decoration: underline; }
 
-.container { max-width: 900px; margin: 0 auto; }
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
 
 .msg {
   margin: 12px 0 18px;
   padding: 10px 12px;
   border-radius: 10px;
   break-inside: auto;
+  display: inline-block;
+  max-width: 66%;
+  width: fit-content;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
-.msg.user { background: #f7f7f9; }
-.msg.assistant { background: #ffffff; }
+.msg.user {
+  background: #f7f7f9;
+  margin-left: auto;
+  margin-right: 0;
+  text-align: left;
+}
+.msg.assistant {
+  background: #ffffff;
+  margin-right: auto;
+}
 
 .msg p { margin: 6px 0; }
 .msg a { text-decoration: underline; }
