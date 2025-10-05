@@ -48,8 +48,9 @@
       'P','H1','H2','H3','H4','H5','H6',
       'STRONG','EM','B','I','U','S','SUB','SUP','SMALL','MARK',
       'UL','OL','LI','BLOCKQUOTE',
-      'A','CODE','BR','HR','SPAN'
+      'A','CODE','BR','HR','SPAN','IMG'
     ]);
+    const IMG_ATTR_ALLOW = new Set(['src', 'alt', 'width', 'height']);
 
     function unwrapKeepChildren(el) {
       const parent = el.parentNode;
@@ -80,6 +81,21 @@
         const span = document.createElement('span');
         span.innerHTML = el.innerHTML;
         toReplace.push([el, span]);
+      }
+      if (tag === 'IMG') {
+        const normalizedSrc = normalizeImageUrl(el);
+        Array.from(el.attributes || []).forEach(attr => {
+          const name = attr.name.toLowerCase();
+          if (!IMG_ATTR_ALLOW.has(name)) {
+            el.removeAttribute(attr.name);
+          }
+        });
+        if (normalizedSrc) {
+          el.setAttribute('src', normalizedSrc);
+        }
+        if (!el.hasAttribute('alt')) {
+          el.setAttribute('alt', '');
+        }
       }
       if (tag === 'A') {
         const href = el.getAttribute('href');
@@ -199,6 +215,43 @@
     };
   }
 
+  function matchesSourceKeyword(str = '') {
+    const lower = str.toLowerCase();
+    if (!lower) return false;
+    return ['source', 'sources', 'logo', 'badge', 'publisher', 'citation', '来源', '出处'].some(k => lower.includes(k));
+  }
+
+  function collectPossibleSourceDescriptors(imgEl) {
+    const descriptors = new Set();
+    const push = (val) => { if (val && typeof val === 'string') descriptors.add(val); };
+    push(imgEl.getAttribute?.('data-testid'));
+    push(imgEl.getAttribute?.('aria-label'));
+    push(imgEl.getAttribute?.('alt'));
+    push(imgEl.className || '');
+    const ancestors = [
+      imgEl.parentElement,
+      imgEl.closest?.('[data-testid]'),
+      imgEl.closest?.('[aria-label]')
+    ].filter(Boolean);
+    ancestors.forEach(node => {
+      push(node.getAttribute?.('data-testid'));
+      push(node.getAttribute?.('aria-label'));
+      push(node.className || '');
+      push(node.textContent || '');
+    });
+    return descriptors;
+  }
+
+  function isLikelyInlineSourceIcon(imgEl) {
+    if (!imgEl) return false;
+    const { width, height } = getRenderedImageSize(imgEl);
+    const maxInlineSize = 64;
+    const smallEnough = (!width || width <= maxInlineSize) && (!height || height <= maxInlineSize);
+    if (!smallEnough) return false;
+    const descriptors = collectPossibleSourceDescriptors(imgEl);
+    return Array.from(descriptors).some(matchesSourceKeyword);
+  }
+
   // ============ chatgpt.com 后端临时签名图：强制转 data: ============
   function isEphemeralChatgptImage(url) {
     try {
@@ -245,7 +298,10 @@
         const tag = el.tagName.toLowerCase();
         if (tag === 'pre' && el.querySelector('code')) return NodeFilter.FILTER_ACCEPT;
         if (tag === 'figure') return NodeFilter.FILTER_ACCEPT;
-        if (tag === 'img' && !el.closest('figure')) return NodeFilter.FILTER_ACCEPT;
+        if (tag === 'img' && !el.closest('figure')) {
+          if (isLikelyInlineSourceIcon(el)) return NodeFilter.FILTER_SKIP;
+          return NodeFilter.FILTER_ACCEPT;
+        }
         if (el.classList?.contains('katex') || el.querySelector?.('.katex')) return NodeFilter.FILTER_ACCEPT;
         if (tag.startsWith('mjx-') || el.querySelector?.('mjx-container')) return NodeFilter.FILTER_ACCEPT;
         return NodeFilter.FILTER_SKIP;
