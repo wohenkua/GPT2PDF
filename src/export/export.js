@@ -39,6 +39,10 @@ function render(conversation) {
     : new Date().toLocaleString();
   const link  = conversation.sourceUrl || '';
 
+  try {
+    document.title = title;
+  } catch {}
+
   document.getElementById('doc-title').textContent = title;
   document.getElementById('doc-time').textContent = `导出时间：${time}`;
   const linkEl = document.getElementById('doc-link');
