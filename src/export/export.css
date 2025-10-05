@@ -25,7 +25,7 @@ body {
   margin: 12px 0 18px;
   padding: 10px 12px;
   border-radius: 10px;
-  break-inside: avoid;
+  break-inside: auto;
 }
 
 .msg.user { background: #f7f7f9; }
