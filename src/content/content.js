@@ -20,6 +20,15 @@
   // ================= 工具函数 =================
   function toAbs(url) { try { return new URL(url, location.href).href; } catch { return url; } }
 
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   // 在原 DOM 与克隆 DOM 间用“路径”定位同一元素
   function elemPath(el, root) {
     const path = [];
@@ -68,7 +77,17 @@
     div.querySelectorAll('svg, path, input, textarea, select').forEach(n => n.remove());
 
     // 移除仅用于可访问性的隐藏角色标签
-    div.querySelectorAll('[data-testid="conversation-turn-label"], .sr-only, [aria-hidden="true"]').forEach(n => n.remove());
+    div.querySelectorAll('[data-testid="conversation-turn-label"], .sr-only').forEach(n => n.remove());
+    div.querySelectorAll('[aria-hidden="true"]').forEach(n => {
+      const text = (n.textContent || '').trim();
+      const hasRich = !!n.querySelector('img, picture, video, audio, canvas, iframe, object, embed, svg, code, pre');
+      if (!text && !hasRich) {
+        n.remove();
+      } else {
+        n.removeAttribute('aria-hidden');
+        unwrapKeepChildren(n);
+      }
+    });
 
     // 规范链接、降级未知标签
     const walker = document.createTreeWalker(div, NodeFilter.SHOW_ELEMENT, null);
@@ -338,13 +357,20 @@
         if (b) blocks.push(b);
       }
     }
-    return blocks.filter(b => {
+    const filtered = blocks.filter(b => {
       if (b.type === 'text') return !!b.html;
       if (b.type === 'image') return !!b.src;
       if (b.type === 'code') return !!(b.code && b.code.trim());
       if (b.type === 'formula') return !!(b.tex || b.html);
       return false;
     });
+    if (!filtered.length) {
+      const fallbackText = (msgNode.textContent || '').trim();
+      if (fallbackText) {
+        filtered.push({ type: 'text', html: `<p>${escapeHtml(fallbackText)}</p>` });
+      }
+    }
+    return filtered;
   }
 
   // 找到页面中的消息节点（尽量稳的并联选择器）
