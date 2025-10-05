@@ -28,7 +28,15 @@ body {
   break-inside: auto;
 }
 
-.msg.user { background: #f7f7f9;}
+.msg.user {
+  background: #f7f7f9;
+  margin-left: auto;
+  margin-right: 0;
+  max-width: 66%;
+  width: fit-content;
+  text-align: left;
+  word-break: break-word;
+}
 .msg.assistant { background: #ffffff; }
 
 .msg p { margin: 6px 0; }
