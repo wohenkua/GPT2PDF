@@ -14,8 +14,10 @@ function renderBlocks(blocks) {
     } else if (b.type === 'image' && b.src) {
       const cap = b.caption ? `<figcaption>${escapeHtml(b.caption)}</figcaption>` : '';
       const alt = b.alt ? ` alt="${escapeHtml(b.alt)}"` : '';
+      const widthAttr = Number.isFinite(b.width) && b.width > 0 ? ` width="${Math.round(b.width)}"` : '';
+      const heightAttr = Number.isFinite(b.height) && b.height > 0 ? ` height="${Math.round(b.height)}"` : '';
       // 关键：避免 Referer 干扰
-      out.push(`<figure><img referrerpolicy="no-referrer" src="${b.src}"${alt}>${cap}</figure>`);
+      out.push(`<figure><img referrerpolicy="no-referrer" src="${b.src}"${alt}${widthAttr}${heightAttr}>${cap}</figure>`);
     } else if (b.type === 'code' && b.code) {
       const langClass = b.lang ? ` class="language-${b.lang}"` : '';
       out.push(`<pre><code${langClass}>${escapeHtml(b.code)}</code></pre>`);
