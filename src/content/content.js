@@ -53,6 +53,9 @@
     // 纯装饰/表单控件直接移除
     div.querySelectorAll('svg, path, input, textarea, select').forEach(n => n.remove());
 
+    // 移除仅用于可访问性的隐藏角色标签
+    div.querySelectorAll('[data-testid="conversation-turn-label"], .sr-only, [aria-hidden="true"]').forEach(n => n.remove());
+
     // 规范链接、降级未知标签
     const walker = document.createTreeWalker(div, NodeFilter.SHOW_ELEMENT, null);
     const toReplace = [];
@@ -157,6 +160,15 @@
   // ================= 抽取消息 blocks =================
   // 识别 text / image / code / formula，并保持文档顺序
   function extractBlocks(msgNode) {
+    const ROLE_HINT_TEXTS = new Set([
+      '您说',
+      '你说',
+      'chatgpt 说',
+      'you said',
+      'chatgpt said',
+      'assistant said'
+    ].map(t => t.toLowerCase()));
+
     // 找“重要块”
     const important = [];
     const tw = document.createTreeWalker(msgNode, NodeFilter.SHOW_ELEMENT, {
@@ -229,7 +241,15 @@
     for (let i = 0; i < parts.length; i++) {
       if (i % 2 === 0) {
         const textHtml = parts[i]?.trim();
-        if (textHtml) blocks.push({ type: 'text', html: textHtml });
+        if (textHtml) {
+          const tmp = document.createElement('div');
+          tmp.innerHTML = textHtml;
+          const rawText = (tmp.textContent || '').trim();
+          const normalized = rawText.replace(/[:：\s]+$/g, '').toLowerCase();
+          if (rawText && !ROLE_HINT_TEXTS.has(normalized)) {
+            blocks.push({ type: 'text', html: textHtml });
+          }
+        }
       } else {
         const idx = Number(parts[i]);
         const b = blocksInOrder[idx];
