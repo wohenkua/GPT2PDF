@@ -121,6 +121,29 @@
     return url;
   }
 
+  function getRenderedImageSize(imgEl) {
+    if (!imgEl) return {};
+    let width;
+    let height;
+    try {
+      const rect = imgEl.getBoundingClientRect?.();
+      if (rect && rect.width > 0 && rect.height > 0) {
+        width = rect.width;
+        height = rect.height;
+      }
+    } catch {}
+    const w = Number(imgEl.width || imgEl.naturalWidth || 0);
+    const h = Number(imgEl.height || imgEl.naturalHeight || 0);
+    if (!width && w > 0) width = w;
+    if (!height && h > 0) height = h;
+    const roundedWidth = Number.isFinite(width) && width > 0 ? Math.round(width) : undefined;
+    const roundedHeight = Number.isFinite(height) && height > 0 ? Math.round(height) : undefined;
+    return {
+      width: roundedWidth,
+      height: roundedHeight
+    };
+  }
+
   // ============ chatgpt.com 后端临时签名图：强制转 data: ============
   function isEphemeralChatgptImage(url) {
     try {
@@ -201,18 +224,24 @@
       } else if (tag === 'figure') {
         const img = origNode.querySelector('img');
         if (img) {
+          const { width, height } = getRenderedImageSize(img);
           blocksInOrder.push({
             type: 'image',
             src: normalizeImageUrl(img),
             alt: img.getAttribute('alt') || '',
-            caption: (origNode.querySelector('figcaption')?.textContent || '').trim() || undefined
+            caption: (origNode.querySelector('figcaption')?.textContent || '').trim() || undefined,
+            width,
+            height
           });
         }
       } else if (tag === 'img') {
+        const { width, height } = getRenderedImageSize(origNode);
         blocksInOrder.push({
           type: 'image',
           src: normalizeImageUrl(origNode),
-          alt: origNode.getAttribute('alt') || ''
+          alt: origNode.getAttribute('alt') || '',
+          width,
+          height
         });
       } else if (origNode.classList?.contains('katex') || origNode.querySelector?.('.katex')) {
         const container = origNode.classList.contains('katex') ? origNode : origNode.querySelector('.katex');
