@@ -29,7 +29,7 @@ body {
 }
 
 .msg.user { background: #f7f7f9; }
-.msg.assistant { background: #f1f8ff; }
+.msg.assistant { background: #ffffff; }
 
 .msg p { margin: 6px 0; }
 .msg a { text-decoration: underline; }
