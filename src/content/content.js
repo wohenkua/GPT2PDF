@@ -255,16 +255,25 @@
     ];
     sels.forEach(sel => {
       document.querySelectorAll(sel).forEach(n => {
+        if (sel === 'article') {
+          const ancestorWithRole = n.closest('[data-message-author-role]');
+          if (ancestorWithRole && ancestorWithRole !== n) return;
+        }
         if (!seen.has(n)) { seen.add(n); out.push(n); }
       });
     });
-    out.sort((a,b) => {
+    out.sort((a, b) => {
       const pos = a.compareDocumentPosition(b);
       if (pos & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
       if (pos & Node.DOCUMENT_POSITION_PRECEDING) return 1;
       return 0;
     });
-    return out;
+    const filtered = [];
+    out.forEach(node => {
+      if (filtered.some(parent => parent !== node && parent.contains(node))) return;
+      filtered.push(node);
+    });
+    return filtered;
   }
 
   // ================= DOM → 结构化：异步（为图片内联） =================
